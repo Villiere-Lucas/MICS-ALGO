@@ -2,7 +2,7 @@
 
 # JOURNAL LOGS
 
--- 05/27/2024 --
+\n -- 05/27/2024 --
 First commit. The code works for any large number. It converts these numbers into base 16 (so base 2^4), and it does an addition between these 2 numbers.
 Everything is work. (Conversion + Addition)
 For example, with the numbers : 987465132231458794651328764548798465584794651184213465879465132 & 159815623184651238994562989465289562895689465984659846598658465
