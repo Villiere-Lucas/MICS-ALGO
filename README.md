@@ -18,3 +18,28 @@ And the sum is:
 
 You can verify the conversion and the addition on this website:  
 [https://www.inchcalculator.com/hex-calculator/](https://www.inchcalculator.com/hex-calculator/)
+
+
+**05/28/2024**
+Second commit. The code work for any large number. 
+Now, substraction and multiplication works with base 2^4 (16).
+All preliminaries functions / conversion functions works for remainderbignum. But the function itself is not aleady implemented.
+The conversion available are : bignum2str / str2bignum / decimalToHex / HexToDecimal / BinaryToDecimal / DecimalToBinary
+
+Here what I want to do :
+Its very hard to convert bignum in base 16 into base 2. It was a problem.
+BUT, I see that the conversion is working when the number is in decimal and in string.
+So, you know what I mean. My idea was to do every conversion function, to transform the bignum in binary bignum, and do the binary euclidean algorithm.
+
+So the step, with a hexadecimal bignum would be :
+1) Hexadecimal bignum --> Hexadecimal String
+2) Hexadecimal String --> Decimal String
+3) Decimal String --> Binary String
+4) Binary String --> Binary bignum
+5) Apply Euclidean Algorithm & get the binary result of the remainder
+6) Binary (result) bignum --> Binary string
+7) Binary String --> Decimal String
+8) Decimal String --> Hexadecimal String
+9) Hexadecimal String --> Hexadecimal bignum.
+
+AND BOOM ! Ok, its a lot of steps, but all of the functions are ready, and I am pretty sure that it will works.
