@@ -90,6 +90,55 @@ bignum* add_bignum(bignum* a, bignum* b) {
     return result;
 }
 
+bignum* sub_bignum(bignum* a, bignum* b) {
+    // Assurez-vous que a >= b pour simplifier l'implémentation
+    int maxSize = a->size;
+    bignum* result = create_bignum(maxSize);
+
+    int borrow = 0;
+    for (int i = 0; i < maxSize; i++) {
+        int subtrahend = (i < b->size) ? b->tab[i] : 0;
+        int diff = a->tab[i] - subtrahend - borrow;
+        if (diff < 0) {
+            diff += 65536; // Base 16^4 = 65536
+            borrow = 1;
+        }
+        else {
+            borrow = 0;
+        }
+        result->tab[i] = diff;
+    }
+
+    // Ajuster la taille du résultat
+    while (result->size > 1 && result->tab[result->size - 1] == 0) {
+        result->size--;
+    }
+
+    return result;
+}
+
+bignum* mult_bignum(bignum* a, bignum* b) {
+    int size = a->size + b->size;
+    bignum* result = create_bignum(size);
+
+    for (int i = 0; i < a->size; i++) {
+        unsigned long long carry = 0;
+        for (int j = 0; j < b->size; j++) {
+            unsigned long long product = (unsigned long long)a->tab[i] * b->tab[j] + result->tab[i + j] + carry;
+            result->tab[i + j] = product % 65536;
+            carry = product / 65536;
+        }
+        result->tab[i + b->size] = carry;
+    }
+
+    // Ajuster la taille du résultat
+    while (result->size > 1 && result->tab[result->size - 1] == 0) {
+        result->size--;
+    }
+
+    return result;
+}
+
 void print_bignum(bignum* num) {
     if (num->sign < 0) printf("-");
     int start = num->size - 1;
@@ -105,7 +154,7 @@ void print_bignum(bignum* num) {
 int main() {
     char decStr1[1024];
     char decStr2[1024];
-
+    printf("--- POUR SIMPLIFIER LES TESTS, ASSUREZ-VOUS QUE a>b --- \n\n");
     printf("Veuillez entrer le premier nombre en base 10: ");
     scanf("%1023s", decStr1);
     printf("Veuillez entrer le deuxième nombre en base 10: ");
@@ -126,13 +175,19 @@ int main() {
     bignum* num2 = str2bignum(hexStr2);
 
     bignum* result = add_bignum(num1, num2);
+    bignum* result_sub = sub_bignum(num1, num2);
+    bignum* result_mult = mult_bignum(num1, num2);
 
-    printf("Num1: ");
+    printf("\nNum1: ");
     print_bignum(num1);
     printf("Num2: ");
     print_bignum(num2);
-    printf("Sum:  ");
+    printf("\nSum:  ");
     print_bignum(result);
+    printf("\nDifference: ");
+    print_bignum(result_sub);
+    printf("\nProduct: ");
+    print_bignum(result_mult);
 
     free(hexStr1);
     free(hexStr2);
