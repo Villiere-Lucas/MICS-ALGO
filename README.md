@@ -43,3 +43,9 @@ So the step, with a hexadecimal bignum would be :
 9) Hexadecimal String --> Hexadecimal bignum.
 
 AND BOOM ! Ok, its a lot of steps, but all of the functions are ready, and I am pretty sure that it will works.
+
+
+**05/29/2024**
+Third Commit. The code work for any large number.
+Now, the bignumremainder() works using the binary euclidean division. And using the preliminaries functions already commit from the second commit.
+Note that somes of functions were modified.

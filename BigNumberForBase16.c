@@ -2,13 +2,39 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <stdbool.h>
 
+// Définition de la structure bignum
 typedef struct {
     int sign;   // 1 pour positif, -1 pour négatif
     int size;   // Taille du tableau
     int* tab;   // Tableau de chiffres
 } bignum;
 
+// Définition de la structure pour le résultat de la division
+typedef struct {
+    bignum* q;
+    bignum* r;
+} division_result;
+
+// Déclaration des fonctions
+bignum* create_bignum(int size);
+bignum* str2bignum(char* str);
+char* bignum2str(bignum* num);
+bignum* add_bignum(bignum* a, bignum* b);
+bignum* sub_bignum(bignum* a, bignum* b);
+bignum* mult_bignum(bignum* a, bignum* b);
+division_result binary_euclidean_division(bignum* a, bignum* b);
+bool compare_bignum(bignum* a, bignum* b);
+bignum* divide_by_2(bignum* num);
+void print_bignum(bignum* num);
+char* decimalToBase2(char* decStr);
+char* base2ToDecimal(const char* binaryString);
+char* decimalToBase16(char* decStr);
+char* hexStringToDecimalString(const char* hexString);
+division_result remainderbignum(bignum* a, bignum* b);
+
+// Fonction pour créer un bignum
 bignum* create_bignum(int size) {
     bignum* num = malloc(sizeof(bignum));
     num->sign = 1; // Positif par défaut
@@ -338,6 +364,276 @@ bignum* mult_bignum(bignum* a, bignum* b) {
     return result;
 }
 
+// -------------------------- DIVISION REMAINDER -----------------------
+
+division_result remainderbignum(bignum* a, bignum* b) {
+    // Mettre les bignums en string.
+    char* hexStringa = bignum2str(a);
+    char* hexStringb = bignum2str(b);
+
+    // Puis mettre en décimale:
+    char* decStringa = hexStringToDecimalString(hexStringa);
+    char* decStringb = hexStringToDecimalString(hexStringb);
+
+    // Puis mettre en binaire :
+    char* binStringa = decimalToBase2(decStringa);
+    char* binStringb = decimalToBase2(decStringb);
+
+    // Et enfin mettre la valeur binaire en bignum:
+    bignum* binaryA = str2bignum(binStringa);
+    bignum* binaryB = str2bignum(binStringb);
+
+    // Maintenant, on peut faire la division euclidienne binaire:
+    division_result divisionRESULT = binary_euclidean_division(binaryA, binaryB);
+
+    bignum* q_binary = divisionRESULT.q;
+    bignum* r_binary = divisionRESULT.r;
+
+    printf("\n\n -- RESULTAT DU BINARY EUCLIDEAN ALGORITHM -- \n\n");
+    printf("QUOTIENT (format binaire puisque le binary euclidean algorithm retourne un résultat binaire):\n");
+    print_bignum(q_binary);
+    printf("\nREMAINDER (format binaire puisque le binary euclidean algorithm retourne un résultat binaire):\n");
+    print_bignum(r_binary);
+
+    // Chemin inverse, il va falloir remettre la valeur binaire en hexadecimale ET bignum.
+    // Donc déjà, on la refout en string
+    char* quotientBinaryString = bignum2str(q_binary);
+    char* remainderBinaryString = bignum2str(r_binary);
+
+    // Puis en décimale :
+    char* quotientDecimalString = base2ToDecimal(quotientBinaryString);
+    char* remainderDecimalString = base2ToDecimal(remainderBinaryString);
+
+    printf("\n\nQUOTIENT (format decimale):\n");
+    printf("%s", quotientDecimalString);
+    printf("\nREMAINDER (format decimale):\n");
+    printf("%s", remainderDecimalString);
+
+    // Puis en hexadecimal :
+    char* quotientHexString = decimalToBase16(quotientDecimalString);
+    char* remainderHexString = decimalToBase16(remainderDecimalString);
+
+    // Et enfin, en bignum
+    bignum* q = str2bignum(quotientHexString);
+    bignum* r = str2bignum(remainderHexString);
+
+    division_result finalRESULT;
+    finalRESULT.q = q;
+    finalRESULT.r = r;
+    return finalRESULT;
+}
+
+// Utile pour le binary euclidean algorithm
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
+
+division_result binary_euclidean_division(bignum* a, bignum* b) {
+    // A SUPPRIMER C'EST JUSTE POUR TESTER UN PRINT
+    int iter = 0;
+
+    printf("\nVoici le bignum a en binaire:\n");
+    print_bignum(a);
+    printf("\nVoici le bignum b en binaire:\n");
+    print_bignum(b);
+
+    // --- INITIALISATION DE Q ---
+    char* zero = "0";
+    bignum* q = str2bignum(zero);
+    printf("\nVerification de la valeur de q (qui ici devrait etre a 0):\n");
+    print_bignum(q);
+
+    // --- INITIALISATION DE R ---
+    bignum* r = a;
+    printf("\nVerification de la valeur de r (qui ici devrait etre egale a 'a'):\n");
+    print_bignum(r);
+
+    // Maintenant on fait c
+    // Pour calculer la taille k et l, je pense qu'il faut calculer la taille en BINAIRE !
+    char* a_string_binary = bignum2str(a);
+    int k = strlen(a_string_binary);
+    printf("\nLa taille du bignum a est : %d", k);
+
+    char* b_string_binary = bignum2str(b);
+    int l = strlen(b_string_binary);
+    printf("\nLa taille du bignum b est : %d", l);
+
+    int k_sub_l = k - l;
+    printf("\nk-l = %d", k_sub_l);
+    int maximum = MAX(0, k_sub_l);
+    printf("\nLe maximum entre 0 et k-l est : %d", maximum);
+
+    // Un peu chiant mais il faut remettre b en décimale pour le multiplier avec 2^max pour avoir la vraie valeur de c. Sinon ca multiplie la représentation binaire de b avec un nombre décimal et forcément ca bug.
+    //Donc b actuellement en binaire doit retourner en décimale.
+    // B : Bignum to String
+    char* temp_b = bignum2str(b);
+    // B : String binaire to decimal
+    char* temp_decimal_b = base2ToDecimal(temp_b);
+
+    char* temp_hexadecimal_b = decimalToBase16(temp_decimal_b);
+
+    bignum* temp_hex_bignum_b = str2bignum(temp_hexadecimal_b);
+
+
+    // B : Transformation en bignum
+    bignum* temp_b_bignum = str2bignum(temp_decimal_b);
+    printf("\nVoici la version decimale de b pour la multiplication avec 2^max()\n");
+    print_bignum(temp_b_bignum);
+
+    printf("\n Et voici sa representation hexadecimale pour la multiplication : \n");
+    print_bignum(temp_hex_bignum_b);
+
+    int two_power_max = (1 << maximum);
+    // On transforme en char*, pour après le mettre en bignum
+    char two_pow_max[50];
+    sprintf(two_pow_max, "%d", two_power_max);
+    printf("\nLa valeur de 2 puissance max(0, k-l) = %s", two_pow_max);
+    // Transformation en hexadecimal pour le calcul
+    char* hex_two_pow_max_string = decimalToBase16(two_pow_max);
+    // Transformation en bignum
+    bignum* two_power_maximum = str2bignum(hex_two_pow_max_string);
+    printf("\nEn version bignum on a : \n");
+    print_bignum(two_power_maximum);
+
+    // On créer la valeur finale de c avec la fonction mult() :
+    bignum* c_value = mult_bignum(two_power_maximum, temp_hex_bignum_b);
+    // Ne pas oublier que le résultat est à la base 2^4 soit 16 soit héxadécimale.
+    char* c_hexValue = bignum2str(c_value);
+    char* c_decValue = hexStringToDecimalString(c_hexValue);
+    printf("\nEt donc la valeur de c serait le resultat d'au dessus FOIS b: %s", c_decValue);
+
+    // On le met en base binaire
+    char* c_binary_string = decimalToBase2(c_decValue);
+    // Et on le convertit en bignum. Et on a enfin notre valeur de c fonctionnelle.
+    bignum* c = str2bignum(c_binary_string);
+
+    printf("\nOn peut verifier si c'est bien sa version binaire :\n");
+    print_bignum(c);
+
+    printf("On a donc :\n");
+    printf("- Q = \n");
+    print_bignum(q);
+    printf("\n- R = \n");
+    print_bignum(r);
+    printf("\n- C = \n");
+    print_bignum(c);
+
+    printf("\n\n ------ JUSQUE LA, TOUT EST BON ! LES VALEURS SONT TOUTES BONNES ET PRETE A L'EMPLOI ------ \n\n");
+    // Maintenant, toutes nos variables, q, r, c, a et b sont prêtes. On peut faire la boucle.
+    // 1ère étape : q <- 2*q
+    char* two_string = "2";
+    bignum* two = str2bignum(two_string);
+
+    char* one_string = "1";
+    bignum* one = str2bignum(one_string);
+
+    // Je pense que y'a un problème avec l'attribution du x2 et du +1.
+    bignum* q_temp;
+
+    for (int i = 0; i <= maximum; i++)
+    {
+        printf("\nIteration numero %d\n", i);
+
+        q = mult_bignum(two, q);
+        printf("\nResultat de q*2 : --- FONCTIONNE --- \n");
+        print_bignum(q);
+
+
+        // 2ème étape : if r>= c then...
+        if (compare_bignum(r, c) == true)
+        {
+            // 3ème étape :r <- r-c avec la fonction sub(). NOTE: Encore et toujours cette ptn de conversion. Pensez à faire des fonctions qui résume ces lignes pour faire un seul call parce que c'est redondant.
+            char* temp_bin_string_r = bignum2str(r);
+            char* temp_dec_string_r = base2ToDecimal(temp_bin_string_r);
+            char* temp_hex_string_r = decimalToBase16(temp_dec_string_r);
+            bignum* temp_r = str2bignum(temp_hex_string_r);
+
+            char* temp_bin_string_c = bignum2str(c);
+            char* temp_dec_string_c = base2ToDecimal(temp_bin_string_c);
+            char* temp_hex_string_c = decimalToBase16(temp_dec_string_c);
+            bignum* temp_c = str2bignum(temp_hex_string_c);
+
+            // RESULTAT EN HEXADECIMAL
+            r = sub_bignum(temp_r, temp_c);
+
+            // A ton avis ? On reconvertit en binaire...
+            char* hex_string_r = bignum2str(r);
+            char* dec_string_r = hexStringToDecimalString(hex_string_r);
+            char* bin_string_r = decimalToBase2(dec_string_r);
+            r = str2bignum(bin_string_r);
+
+            printf("\nLe resultat de r - c = --- FONCTIONNE ---\n");
+            print_bignum(r);
+
+
+            //4ème étape : q<- q+1 avec la fonction add.
+            // (création du bignum pour "1")
+            q = add_bignum(q, one);
+            printf("\nLe resultat de q +1 = --- FONCTIONNE --- \n");
+            print_bignum(q);
+        }
+        //5ème étape : c <- c/2
+        printf("\nAppel numero %d\n", iter);
+        iter++;
+        printf("\nVoici la valeur de C:\n");
+        print_bignum(c);
+        c = divide_by_2(c);
+        printf("\nLe resultat de c/2 = --- FONCTIONNE ---\n");
+        print_bignum(c);
+    }
+
+    char* hex_q_string = bignum2str(q);
+    char* dec_q_string = hexStringToDecimalString(hex_q_string);
+    char* binary_q_string = decimalToBase2(dec_q_string);
+    bignum* q_bin = str2bignum(binary_q_string);
+
+    division_result divisionRESULT;
+    divisionRESULT.q = q_bin; // Il est au format Hexadecimal
+    divisionRESULT.r = r; // Il est au format binaire
+
+    // Retourne au format binaire le quotient et le remainder.
+    /*printf("quotient : ");
+    print_bignum(divisionRESULT.q);
+    printf("\nremainder : ");
+    print_bignum(divisionRESULT.r);*/
+
+    return divisionRESULT;
+}
+
+
+bool compare_bignum(bignum* a, bignum* b) {
+    // Comparer la taille d'abord, c'est le + simple.
+    if (a->size > b->size) return true;
+    if (a->size < b->size) return false;
+
+    // Si les tailles sont égales, alors il faut comparer chiffre par chiffres en partant du plus significatif.
+    for (int i = a->size - 1; i >= 0; i--)
+    {
+        if (a->tab[i] > b->tab[i]) return true;
+        if (a->tab[i] < b->tab[i]) return false;
+    }
+
+    // Enfin, si tous les chiffres sont égaux, alors a = b, et donc c'est true.
+    return true;
+}
+
+// Fonction pour diviser un bignum binaire par 2 (en utilisant une conversion en chaîne)
+bignum* divide_by_2(bignum* num) {
+    char* num_str = bignum2str(num); // Convertir le bignum en chaîne
+    int len = strlen(num_str);
+
+    // Supprimer le dernier caractère de la chaîne
+    if (len > 1) {
+        num_str[len - 1] = '\0';
+    }
+    else {
+        strcpy(num_str, "0");
+    }
+
+    bignum* result = str2bignum(num_str); // Convertir la chaîne modifiée en bignum
+    free(num_str);
+    return result;
+}
+
+// Fonction pour afficher un bignum
 void print_bignum(bignum* num) {
     if (num->sign < 0) printf("-");
     int start = num->size - 1;
@@ -429,12 +725,16 @@ int main() {
     printf("\n Retour en base decimal pour num1: %1023s\n", decimal_str_from_binary1);
     printf("Retour en base decimal pour num2: %1023s\n", decimal_str_from_binary2);
 
-    printf("\n-------------- TEST CONVERSION BINAIRE --> BIGNUM--------------\n");
-    bignum* binary_num1 = str2bignum(binary_str_from_decimal1);
-    bignum* binary_num2 = str2bignum(binary_str_from_decimal2);
+    printf("\n-------------- TEST DIVISION BINAIRE --------------\n");
+    division_result testRESULT = remainderbignum(num1, num2);
+    bignum* quotient = testRESULT.q;
+    bignum* remainder = testRESULT.r;
 
-    print_bignum(binary_num1);
-    print_bignum(binary_num2);
+    printf("\n\nVoici le quotient (base 2^4 soit 16):\n");
+    print_bignum(quotient);
+    printf("\nVoici le remainder (base 2^4 soit 16):\n");
+    print_bignum(remainder);
+
 
     // Libérer la mémoire allouée dynamiquement
     free(hexStr1);
