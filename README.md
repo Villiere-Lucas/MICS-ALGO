@@ -21,7 +21,7 @@ You can verify the conversion and the addition on this website:
 
 
 **05/28/2024**
-Second commit. The code work for any large number. 
+Second commit. The code works for any large number. 
 Now, substraction and multiplication works with base 2^4 (16).
 All preliminaries functions / conversion functions works for remainderbignum. But the function itself is not aleady implemented.
 The conversion available are : bignum2str / str2bignum / decimalToHex / HexToDecimal / BinaryToDecimal / DecimalToBinary
@@ -46,6 +46,11 @@ AND BOOM ! Ok, its a lot of steps, but all of the functions are ready, and I am 
 
 
 **05/29/2024**
-Third Commit. The code work for any large number.
+Third Commit. The code works for any large number.
 Now, the bignumremainder() works using the binary euclidean division. And using the preliminaries functions already commit from the second commit.
 Note that somes of functions were modified.
+
+
+**05/29/2024**
+Fourth Commit. The code works for any large number.
+Now, the addmod() and multmod() functions are working. Just by using the add(), and mult() function with the remainderbignum() function.
