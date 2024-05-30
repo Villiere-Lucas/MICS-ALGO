@@ -694,6 +694,91 @@ bignum* multmod(bignum* a, bignum* b, bignum* n) {
     return remainder;
 }
 
+// Fonction expmod using Square and Multiply algorithm
+bignum* expmod(bignum* a, bignum* b, bignum* n) {
+    // Step 1: Initialize c to 1
+    char* one_str = "1";
+    bignum* one = str2bignum(one_str);
+
+    // Le problème est que c n'est pas en hexadecimal
+    char* c_string_dec = bignum2str(one);
+    char* c_string_hex = decimalToBase16(c_string_dec);
+    bignum* c_hex = str2bignum(c_string_hex);
+
+    printf("\nVerification que c = 1:\n");
+    print_bignum(c_hex);
+
+    // Convert bignum b to binary string
+    char* hexStr_b = bignum2str(b);
+    char* decStr_b = hexStringToDecimalString(hexStr_b);
+    char* binStr_b = decimalToBase2(decStr_b);
+
+    printf("\n Voici la version binaire de votre bignum b : \n");
+    printf("%s", binStr_b);
+
+
+    int len = strlen(binStr_b);
+    printf("\nEt la taille de votre bignum b binaire est de : %d\n", len);
+
+    // JUSQUE LA, ON EST BON
+
+    // Après test, on voit que A et N sont en hexadecimal
+    printf("Pour informations, voici la representation actuelle de votre bignum A: ");
+    print_bignum(a);
+    printf("\nEt voici la representation actuelle de votre bignum N: ");
+    print_bignum(n);
+
+    // Au cas ou
+    // bignum* binary_b = str2bignum(binStr_b);
+    int j = 0;
+    // Step 2: Loop from l-1 to 0
+    for (int i = len - 1; i >= 0; i--) {
+        printf("\nHere, the value of i : %d", i);
+        // c = (c * c) % n
+        printf("\nVoici la valeur actuelle de c:\n");
+        print_bignum(c_hex);
+        bignum* temp = c_hex;
+        c_hex = multmod(c_hex, c_hex, n);
+        printf("\nVoici le resultat de c*c mod n:\n");
+        print_bignum(c_hex);
+
+        free(temp->tab);
+        free(temp);
+
+        printf("\nVoici la valeur actuelle de b[i]: %c", binStr_b[i]);
+        // if bi == 1, then c = (c * a) % n
+        if (binStr_b[j] == '1') {
+
+            temp = c_hex;
+            printf("\nVoici la valeur actuelle de c (condition if):\n");
+            print_bignum(c_hex);
+
+            printf("\nVoici la valeur actuelle de a (condition if):\n");
+            print_bignum(a);
+
+            c_hex = multmod(c_hex, a, n);
+            printf("\nVoici le resultat de c*a mod n (condition if):\n");
+            print_bignum(c_hex);
+
+            free(temp->tab);
+            free(temp);
+        }
+        j++;
+    }
+
+    printf("\nVoici le reultat de c en hexadecimal : \n");
+    print_bignum(c_hex);
+    printf("\nVoici le resultat de c en decimal : \n");
+    char* c_result_hex = bignum2str(c_hex);
+    char* c_result_dec = hexStringToDecimalString(c_result_hex);
+    bignum* c_bignum_dec = str2bignum(c_result_dec);
+    print_bignum(c_bignum_dec);
+    // Free the binary string
+    free(binStr_b);
+
+    return c_hex;
+}
+
 int main() {
     char decStr1[1024];
     char decStr2[1024];
@@ -804,6 +889,19 @@ int main() {
     bignum* multmod_result = multmod(num1, num2, n_mult);
     printf("\n Le resultat de a*b mod n est :\n");
     print_bignum(multmod_result);
+
+
+    printf("\n\n-------------- TEST EXPMOD --------------\n");
+    char decStr_n_exp[1024];
+    printf("Veuillez entrer votre modulo 'n' pour la exponentiation: ");
+    scanf("%1023s", decStr_n_exp);
+    char* hex_n_exp = decimalToBase16(decStr_n_exp);
+    bignum* n_exp = str2bignum(hex_n_exp);
+
+    bignum* expmod_result = expmod(num1, num2, n_exp);
+    printf("\n Le resultat de a^b mod n est :\n");
+    print_bignum(expmod_result);
+
 
 
     // Libérer la mémoire allouée dynamiquement
