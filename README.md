@@ -54,3 +54,7 @@ Note that somes of functions were modified.
 **05/29/2024**
 Fourth Commit. The code works for any large number.
 Now, the addmod() and multmod() functions are working. Just by using the add(), and mult() function with the remainderbignum() function.
+
+**05/30/2024**
+Fifth Commit. The code works for any large number.
+Now, the expmod() function is working.
